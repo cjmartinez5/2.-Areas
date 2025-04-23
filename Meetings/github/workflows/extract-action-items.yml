@@ -18,23 +18,47 @@ jobs:
     - name: Extract Action Items
       id: extract
       run: |
-        # Extract Action Items section
+        # Extract "Action Items" section
         awk '/^.*Action Items:.*$/,/^.*Next Steps\/Outstanding Queries:.*$/' $(find Meetings -type f -name '*.md') > extracted_action_items.txt
-        # Extract Meeting Date from filename
-        echo "Meeting Date: $(date -d $(basename $(find Meetings -type f -name '*.md') | cut -d'.' -f1) +"%Y-%m-%d")" > metadata.txt
-        # Extract Folder Name
+        # Generate metadata
+        echo "Meeting Date: $(basename $(find Meetings -type f -name '*.md') | awk -F'[-.]' '{print $2"-"$1"-"$3}')" > metadata.txt
         echo "Folder Name: $(basename $(dirname $(find Meetings -type f -name '*.md')))" >> metadata.txt
 
-    # Step 3: Add extracted action items to GitHub Project
+    # Step 3: Push action items to GitHub Project columns
     - name: Push to GitHub Project
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        PROJECT_URL: https://github.com/users/cjmartinez5/projects/2
+        GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+        TITLE_COLUMN_ID: <title_column_id>
+        ASSIGNEE_COLUMN_ID: <assignee_column_id>
+        STATUS_COLUMN_ID: <status_column_id>
       run: |
         while IFS= read -r line; do
+          # Extract Title, Assignee, and Status from the action item
+          title=$(echo "$line" | awk -F']' '{print $2}' | sed 's/^ //')
+          assignee=$(echo "$line" | grep -oP '\[\K[^]]*')
+          status="To-Do" # Default status, can be updated dynamically
+
+          # Push to Title column
           curl -X POST \
             -H "Authorization: Bearer $GITHUB_TOKEN" \
             -H "Accept: application/vnd.github+json" \
-            "${PROJECT_URL}" \
-            -d '{"note": "'"$line"'"}'
+            -d '{"note": "'"$title"'"}' \
+            "https://api.github.com/projects/columns/${TITLE_COLUMN_ID}/cards"
+
+          # Push to Assignee column
+          if [ -n "$assignee" ]; then
+            curl -X POST \
+              -H "Authorization: Bearer $GITHUB_TOKEN" \
+              -H "Accept: application/vnd.github+json" \
+              -d '{"note": "'"Assigned to: $assignee"'"}' \
+              "https://api.github.com/projects/columns/${ASSIGNEE_COLUMN_ID}/cards"
+          fi
+
+          # Push to Status column
+          curl -X POST \
+            -H "Authorization: Bearer $GITHUB_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            -d '{"note": "'"Status: $status"'"}' \
+            "https://api.github.com/projects/columns/${STATUS_COLUMN_ID}/cards"
+
         done < extracted_action_items.txt
