@@ -1,0 +1,40 @@
+name: Extract and Push Action Items
+
+on:
+  push:
+    paths:
+      - 'Meetings/**'
+
+jobs:
+  extract-action-items:
+    runs-on: ubuntu-latest
+
+    steps:
+    # Step 1: Checkout the repository
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    # Step 2: Extract action items from the pushed file
+    - name: Extract Action Items
+      id: extract
+      run: |
+        # Extract Action Items section
+        awk '/^.*Action Items:.*$/,/^.*Next Steps\/Outstanding Queries:.*$/' $(find Meetings -type f -name '*.md') > extracted_action_items.txt
+        # Extract Meeting Date from filename
+        echo "Meeting Date: $(date -d $(basename $(find Meetings -type f -name '*.md') | cut -d'.' -f1) +"%Y-%m-%d")" > metadata.txt
+        # Extract Folder Name
+        echo "Folder Name: $(basename $(dirname $(find Meetings -type f -name '*.md')))" >> metadata.txt
+
+    # Step 3: Add extracted action items to GitHub Project
+    - name: Push to GitHub Project
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        PROJECT_URL: https://github.com/users/cjmartinez5/projects/2
+      run: |
+        while IFS= read -r line; do
+          curl -X POST \
+            -H "Authorization: Bearer $GITHUB_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            "${PROJECT_URL}" \
+            -d '{"note": "'"$line"'"}'
+        done < extracted_action_items.txt
