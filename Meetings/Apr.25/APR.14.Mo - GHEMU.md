@@ -1,0 +1,35 @@
+**Meeting Summary:**
+
+-   **Topics Discussed:**
+    -   Migration of applications from GitHub on-premise to GitHub Enterprise Managed User (EMU).
+    -   Dependencies and potential blockers for the EMU migration.
+    -   Impact of the migration on various teams and applications (UCP, Topo, API, Evergreen).
+    -   SSH key usage and transition to OAuth for API integrations.
+    -   Service account and personal access token usage for API access.
+    -   The impact of changing repo URLs.
+    - The use of Harness CI and the need to migrate.
+    - User access management during and after the migration.
+    - the timeline expectation for moving over to EMU.
+-   **Key Decisions:**
+    -   Proceed with moving applications to EMU that are already onboarded with Harness CI.
+    -   Address the UCP dependency as a priority due to its critical nature for migration.
+    -   Topo migration is considered long-term and will be addressed in a separate track.
+    - Evergreen will be kept on an allow list as they are heavily Jenkins based.
+    - User access to Repos will be migrated over with the Repos to EMU.
+    - All on prem users will be migrated to EMU.
+    -  Repo migration will have a Dry Run process in order to allow teams to check all dependencies prior to production migration.
+    - Any users or applications that rely on personal API keys need to be migrated to using GitHub apps.
+-   **Action Items:**
+    -   [Srividya] Provide an updated timeline for the completion of the UCP work.
+    -   [Ken] Research and document the API dependencies and usage within Lscm and report back to John.
+    -   [Ken] Investigate the Evergreen team's reliance on Jenkins and explore potential options.
+    - [Siddharth] document the usage of SSH in Topo and if it can be moved to OAF
+    - [Mike and Rob] Create discovery templates to help teams during the migration process.
+    - [Mike and Rob] Provide documentation to teams regarding using GitHub Apps vs service accounts.
+    - [Mike and Rob] Continue to track repo migration and user onboarding.
+-   **Next Steps/Outstanding Queries:**
+    -   Schedule a follow-up discussion regarding API dependencies and the need for a deeper dive into API-related challenges.
+    -   Verify UCP sprint 213 deadline with the UCP team.
+    - Ken will check his teams API usage and report back.
+    - The team will continue to work towards the Okr of having most of the apps moved to EMU by the end of the year.
+    -  Continue to track any service account usage to see if any personal access tokens have been created.
